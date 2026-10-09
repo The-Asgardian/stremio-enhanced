@@ -6,6 +6,6 @@ The player already receives embedded subtitle tracks and subtitle-addon tracks t
 
 ## Source-provided downloads
 
-Stream context menus now offer a direct Download action only when a stream explicitly supplies `deepLinks.externalPlayer.download`. The action accepts HTTPS URLs and HTTP URLs on localhost for the local streaming service; it ignores playback links, torrent/magnet links, remote HTTP, and credential-bearing URLs. Suggested filenames are sanitized before they reach the browser's download attribute. The user still needs to follow the source provider's terms and download permissions.
+The recommended source now shows a Play and Download pair when a stream explicitly supplies `deepLinks.externalPlayer.download`; the per-source context menu also offers Download for manual choices. The action accepts HTTPS URLs and HTTP URLs on localhost for the local streaming service; it ignores playback links, torrent/magnet links, remote HTTP, and credential-bearing URLs. Suggested filenames are sanitized before they reach the browser's download attribute. The user still needs to follow the source provider's terms and download permissions.
 
 The current web/core contract has no download permission field, managed queue, pause/resume API, storage quota, or offline library model. This increment therefore delegates an explicitly exposed direct download to the browser and does not claim to provide background downloads or offline playback. A managed download manager requires a service/native host and an explicit permission/capability contract.

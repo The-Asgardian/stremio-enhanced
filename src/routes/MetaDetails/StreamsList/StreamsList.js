@@ -15,6 +15,8 @@ const styles = require('./styles');
 const { usePlatform, useProfile } = require('stremio/common');
 const { default: SeasonEpisodePicker } = require('../EpisodePicker');
 const { rankCandidates } = require('./rankCandidates');
+const ActionButton = require('stremio/components/MetaPreview/ActionButton');
+const { getDownloadAction } = require('./Stream/downloadAction');
 
 const ALL_ADDONS_KEY = 'ALL';
 
@@ -105,6 +107,10 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
             } : null,
         };
     }, [filteredStreams, platform.name]);
+    const recommendedDownload = rankedStreams.recommended ?
+        getDownloadAction(rankedStreams.recommended.stream.deepLinks)
+        :
+        null;
     const selectableOptions = React.useMemo(() => {
         return {
             options: [
@@ -215,6 +221,18 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                                                 aria-label={`${t('CTX_PLAY')}: ${rankedStreams.recommended.stream.name || rankedStreams.recommended.stream.addonName}`}
                                                 onClick={rankedStreams.recommended.stream.onClick}
                                             />
+                                            {recommendedDownload ? (
+                                                <ActionButton
+                                                    className={styles['recommended-download-button']}
+                                                    icon={'download'}
+                                                    label={t('CTX_DOWNLOAD_VIDEO')}
+                                                    variant={'wide'}
+                                                    href={recommendedDownload.href}
+                                                    target={'_blank'}
+                                                    rel={'noopener noreferrer'}
+                                                    download={recommendedDownload.fileName}
+                                                />
+                                            ) : null}
                                         </div>
                                         : null
                                 }

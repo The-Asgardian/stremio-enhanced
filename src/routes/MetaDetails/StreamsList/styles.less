@@ -124,12 +124,21 @@
         flex: none;
         align-self: stretch;
         display: flex;
+        flex-wrap: wrap;
+        align-items: center;
         justify-content: center;
+        gap: 0.75rem;
         padding: 0 1rem;
         margin-top: 1rem;
 
         .recommended-source-button {
-            width: min(100%, 32rem);
+            flex: 1 1 12rem;
+            width: auto;
+            max-width: 32rem;
+        }
+
+        .recommended-download-button {
+            flex: 0 1 auto;
         }
     }
 
