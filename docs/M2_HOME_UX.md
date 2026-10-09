@@ -1,0 +1,9 @@
+# M2 Home experience slice
+
+The Home board now opens with a cinematic featured-title panel built from the first ready movie or series catalog item that has artwork and a valid Stremio deep link. It uses addon metadata and artwork already loaded by the existing board model; it adds no new recommendation service, ranking claim, or external request.
+
+The primary action opens the player only when the item already provides a direct player link. Otherwise it opens the title details page. When both routes exist, a second details action is available. Existing catalog rails and Continue Watching remain in their current order below the hero.
+
+The panel uses an original dark gradient treatment, responsive type and spacing, touch-sized buttons, visible keyboard/gamepad focus, and reduced-motion support. It does not reproduce another service's exact branding, artwork treatment, or navigation.
+
+`tests/featuredMetaItem.spec.js` verifies selection from ready movie/series catalogs and ignores missing, empty, malformed, or unrouteable entries. The desktop and narrow-window layout were reviewed in the local web build. Native mobile and TV package validation remains separate work.

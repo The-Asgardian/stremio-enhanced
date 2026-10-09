@@ -11,6 +11,8 @@ const useContinueWatchingPreview = require('./useContinueWatchingPreview');
 const { default: useLiveTvContinueWatching } = require('./useLiveTvContinueWatching');
 const styles = require('./styles');
 const { default: StreamingServerWarning } = require('./StreamingServerWarning');
+const FeaturedHero = require('./FeaturedHero');
+const getFeaturedMetaItem = require('./featuredMetaItem');
 
 const THRESHOLD = 5;
 
@@ -40,11 +42,13 @@ const Board = () => {
         leadingRows: boardCatalogsOffset,
         preloadRows: THRESHOLD,
     });
+    const featuredItem = React.useMemo(() => getFeaturedMetaItem(catalogRows), [catalogRows]);
     return (
         <div className={styles['board-container']}>
             <EventModal />
             <MainNavBars className={styles['board-content-container']} route={'board'}>
                 <div ref={scrollContainerRef} className={styles['board-content']} onScroll={onScroll}>
+                    <FeaturedHero item={featuredItem} />
                     {
                         continueWatchingPreview.items.length > 0 ?
                             <MetaRow
@@ -72,10 +76,14 @@ const Board = () => {
                     {catalogRows.map(({ catalog, index }) => {
                         switch (catalog.content?.type) {
                             case 'Ready': {
+                                if (!Array.isArray(catalog.content.content) || catalog.content.content.length === 0) {
+                                    return null;
+                                }
+                                const posterShape = catalog.content.content[0].posterShape || 'poster';
                                 return (
                                     <MetaRow
                                         key={index}
-                                        className={classnames(styles['board-row'], styles[`board-row-${catalog.content.content[0].posterShape}`], 'animation-fade-in')}
+                                        className={classnames(styles['board-row'], styles[`board-row-${posterShape}`], 'animation-fade-in')}
                                         catalog={catalog}
                                         itemComponent={MetaItem}
                                     />
