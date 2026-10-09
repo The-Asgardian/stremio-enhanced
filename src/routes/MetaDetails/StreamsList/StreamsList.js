@@ -17,6 +17,7 @@ const { default: SeasonEpisodePicker } = require('../EpisodePicker');
 const { rankCandidates } = require('./rankCandidates');
 const ActionButton = require('stremio/components/MetaPreview/ActionButton');
 const { getDownloadAction } = require('./Stream/downloadAction');
+const { createDownloadQueueEntry, addDownloadQueueEntry } = require('./downloadQueue');
 
 const ALL_ADDONS_KEY = 'ALL';
 
@@ -29,6 +30,13 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
     const goBack = useGoBack();
     const streamsContainerRef = React.useRef(null);
     const [selectedAddon, setSelectedAddon] = React.useState(ALL_ADDONS_KEY);
+    const [recentDownloads, setRecentDownloads] = React.useState([]);
+    const onDownloadRequest = React.useCallback((action) => {
+        const entry = createDownloadQueueEntry(action, video?.name || video?.title);
+        if (entry) {
+            setRecentDownloads((current) => addDownloadQueueEntry(current, entry));
+        }
+    }, [video?.name, video?.title]);
     const onAddonSelected = React.useCallback((value) => {
         streamsContainerRef.current.scrollTo({ top: 0, left: 0, behavior: platform.name === 'ios' ? 'smooth' : 'instant' });
         setSelectedAddon(value);
@@ -231,11 +239,38 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                                                     target={'_blank'}
                                                     rel={'noopener noreferrer'}
                                                     download={recommendedDownload.fileName}
+                                                    onClick={() => onDownloadRequest(recommendedDownload)}
                                                 />
                                             ) : null}
                                         </div>
                                         : null
                                 }
+                                {recentDownloads.length > 0 ? (
+                                    <section className={styles['recent-downloads']} aria-label={'Recent downloads'}>
+                                        <div className={styles['recent-downloads-heading']}>
+                                            <div>
+                                                <h3>Recent downloads</h3>
+                                                <p>Opened by your browser. Progress and offline availability are managed by your device.</p>
+                                            </div>
+                                            <Button className={styles['clear-downloads']} title={t('CLEAR_HISTORY')} onClick={() => setRecentDownloads([])}>
+                                                {t('CLEAR_HISTORY')}
+                                            </Button>
+                                        </div>
+                                        <ul>
+                                            {recentDownloads.map((entry) => (
+                                                <li key={entry.id}>
+                                                    <div className={styles['recent-download-info']}>
+                                                        <strong>{entry.fileName}</strong>
+                                                        <span>{entry.title} · {new Date(entry.requestedAt).toLocaleTimeString()}</span>
+                                                    </div>
+                                                    <a href={entry.href} target={'_blank'} rel={'noopener noreferrer'} download={entry.fileName}>
+                                                        {t('CTX_DOWNLOAD_VIDEO')}
+                                                    </a>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </section>
+                                ) : null}
                                 <div className={styles['streams-container']} ref={streamsContainerRef}>
                                     {rankedStreams.streams.map((stream, index) => (
                                         <Stream
@@ -250,6 +285,7 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                                             deepLinks={stream.deepLinks}
                                             externalPlayerCallbackCanMarkWatched={externalPlayerCallbackCanMarkWatched}
                                             onClick={stream.onClick}
+                                            onDownloadRequest={onDownloadRequest}
                                         />
                                     ))}
                                     {

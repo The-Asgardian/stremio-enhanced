@@ -33,7 +33,7 @@ const getHref = (deepLinks, platformName) => {
     return deepLinks.player || null;
 };
 
-const Stream = ({ className = '', compact = false, isEpg = false, videoId = undefined, videoReleased = undefined, addonName, name, description, thumbnail = undefined, progress, deepLinks, externalPlayerCallbackCanMarkWatched, ...props }) => {
+const Stream = ({ className = '', compact = false, isEpg = false, videoId = undefined, videoReleased = undefined, addonName, name, description, thumbnail = undefined, progress, deepLinks, externalPlayerCallbackCanMarkWatched, onDownloadRequest, ...props }) => {
     const profile = useProfile();
     const toast = useToast();
     const platform = usePlatform();
@@ -255,14 +255,14 @@ const Stream = ({ className = '', compact = false, isEpg = false, videoId = unde
                 }
                 {
                     !isEpg && downloadAction &&
-                        <Button className={styles['context-menu-option-container']} title={t('CTX_DOWNLOAD_VIDEO')} href={downloadAction.href} target={'_blank'} rel={'noopener noreferrer'} download={downloadAction.fileName} onClick={closeMenu}>
+                        <Button className={styles['context-menu-option-container']} title={t('CTX_DOWNLOAD_VIDEO')} href={downloadAction.href} target={'_blank'} rel={'noopener noreferrer'} download={downloadAction.fileName} onClick={() => { closeMenu(); onDownloadRequest?.(downloadAction); }}>
                             <Icon className={styles['menu-icon']} name={'download'} />
                             <div className={styles['context-menu-option-label']}>{t('CTX_DOWNLOAD_VIDEO')}</div>
                         </Button>
                 }
             </div>
         );
-    }, [copyStreamLink, onClick, isEpg, href, target, download, downloadAction]);
+    }, [copyStreamLink, onClick, isEpg, href, target, download, downloadAction, onDownloadRequest]);
 
     React.useEffect(() => {
         if (!routeFocused) {
@@ -319,6 +319,7 @@ Stream.propTypes = {
         })
     }),
     externalPlayerCallbackCanMarkWatched: PropTypes.bool,
+    onDownloadRequest: PropTypes.func,
     onClick: PropTypes.func
 };
 
