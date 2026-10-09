@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CONSTANTS, getKeyboardShortcutKeys, languages, useFileDropListener, useInterval, useShortcut, useTimeout, useToast } from 'stremio/common';
+import { CONSTANTS, getKeyboardShortcutKeys, useFileDropListener, useInterval, useShortcut, useTimeout, useToast } from 'stremio/common';
 import {
     getSubtitleDelayStepMultiplier,
     snapSubtitleDelay,
@@ -10,6 +10,10 @@ import {
     SUBTITLES_DELAY_REPEAT_INTERVAL_MS,
     SUBTITLES_DELAY_STEP_MS,
 } from './subtitleDelay';
+import { buildSubtitleCandidates, normalizeSubtitleLanguage, resolveBestSubtitleCandidate } from './subtitleSelection';
+
+type SubtitleSource = 'embedded' | 'external';
+type SubtitleCandidate = { source: SubtitleSource, id?: string, language?: string };
 
 const withFallbackLabels = (tracks?: SubtitleTrack[] | null): SubtitleTrack[] => {
     if (!Array.isArray(tracks)) {
@@ -30,38 +34,6 @@ const findTrackById = (tracks: SubtitleTrack[], id?: string | null) => {
     return tracks.find((track) => track.id === id);
 };
 
-const normalizeLanguage = (language?: string | null) => {
-    if (!language) {
-        return undefined;
-    }
-
-    const value = language.trim();
-    const normalized = languages.find(value) ?? languages.find(value.toLowerCase());
-
-    return normalized?.code;
-};
-
-const findTrackByLanguage = (tracks: SubtitleTrack[], language?: string | null) => {
-    const languageCode = normalizeLanguage(language);
-    if (!languageCode) {
-        return undefined;
-    }
-
-    return tracks.find((track) => normalizeLanguage(track.lang) === languageCode);
-};
-
-type SubtitleCandidate = {
-    source: SubtitleSource,
-    id?: string,
-    language?: string,
-};
-
-type ResolvedSubtitleCandidate = {
-    source: SubtitleSource,
-    rank: number,
-    track: SubtitleTrack,
-};
-
 type SubtitleDelayHold = {
     direction: number,
     key: string,
@@ -80,90 +52,7 @@ const candidateMatchesTrack = (
         return false;
     }
 
-    return !candidate.language || normalizeLanguage(track.lang) === candidate.language;
-};
-
-const resolveCandidate = (
-    candidate: SubtitleCandidate,
-    subtitlesTracks: SubtitleTrack[],
-    extraSubtitlesTracks: SubtitleTrack[],
-) => {
-    const tracks = candidate.source === 'embedded' ? subtitlesTracks : extraSubtitlesTracks;
-    const track = candidate.id ?
-        findTrackById(tracks, candidate.id)
-        :
-        findTrackByLanguage(tracks, candidate.language);
-
-    return track && (!candidate.language || normalizeLanguage(track.lang) === candidate.language) ?
-        track
-        :
-        undefined;
-};
-
-const buildCandidates = (
-    sessionPreference: SubtitlePreference | null,
-    savedTrack: SubtitlesTrackState | null | undefined,
-    globalLanguage: string | null,
-) => {
-    const candidates: SubtitleCandidate[] = [];
-    const languagesOrder: string[] = [];
-    const sessionEnabled = sessionPreference?.enabled === true;
-    const sessionLanguage = normalizeLanguage(sessionPreference?.language);
-    const savedLanguage = normalizeLanguage(savedTrack?.language);
-    const savedSource = savedTrack ? (savedTrack.embedded ? 'embedded' : 'external') : undefined;
-    const preferredSource = sessionEnabled ? sessionPreference.source : savedSource;
-    const sources: SubtitleSource[] = preferredSource === 'external' ?
-        ['external', 'embedded']
-        :
-        ['embedded', 'external'];
-
-    const addLanguage = (language?: string) => {
-        if (language && !languagesOrder.includes(language)) {
-            languagesOrder.push(language);
-        }
-    };
-
-    if (savedTrack?.id && (!sessionEnabled ||
-        !sessionPreference.source || sessionPreference.source === savedSource)) {
-        candidates.push({
-            source: savedSource as SubtitleSource,
-            id: savedTrack.id,
-            ...(sessionLanguage ? { language: sessionLanguage } : {}),
-        });
-    }
-
-    if (sessionEnabled) {
-        addLanguage(sessionLanguage ?? savedLanguage);
-    } else {
-        addLanguage(savedLanguage);
-    }
-    addLanguage(normalizeLanguage(globalLanguage));
-    if (sessionEnabled) {
-        addLanguage(normalizeLanguage(CONSTANTS.DEFAULT_SUBTITLES_LANGUAGE));
-    }
-
-    // Keep language ahead of source so the selected language can cross source types.
-    languagesOrder.forEach((language) => {
-        sources.forEach((source) => candidates.push({ source, language }));
-    });
-
-    return candidates;
-};
-
-const resolveBestCandidate = (
-    candidates: SubtitleCandidate[],
-    subtitlesTracks: SubtitleTrack[],
-    extraSubtitlesTracks: SubtitleTrack[],
-): ResolvedSubtitleCandidate | undefined => {
-    for (let rank = 0; rank < candidates.length; rank++) {
-        const candidate = candidates[rank];
-        const track = resolveCandidate(candidate, subtitlesTracks, extraSubtitlesTracks);
-        if (track) {
-            return { source: candidate.source, rank, track };
-        }
-    }
-
-    return undefined;
+    return !candidate.language || normalizeSubtitleLanguage(track.lang) === candidate.language;
 };
 
 const findCandidateRank = (
@@ -225,7 +114,7 @@ const useSubtitles = ({
     }, []);
 
     const rememberTrack = useCallback((track: SubtitleTrack, embedded: boolean) => {
-        const language = normalizeLanguage(track.lang);
+        const language = normalizeSubtitleLanguage(track.lang);
         lastSelectedTrack.current = {
             id: track.id,
             embedded,
@@ -258,7 +147,7 @@ const useSubtitles = ({
                 :
                 undefined;
         const source = player.subtitlePreference?.source ?? selectedSource;
-        const language = player.subtitlePreference?.language ?? normalizeLanguage(selectedTrack?.lang);
+        const language = player.subtitlePreference?.language ?? normalizeSubtitleLanguage(selectedTrack?.lang);
 
         trackSelectionLocked.current = true;
         appliedTrack.current = null;
@@ -430,8 +319,8 @@ const useSubtitles = ({
         }
 
         const savedTrack = player.streamState?.subtitleTrack;
-        const candidates = buildCandidates(sessionPreference, savedTrack, settings.subtitlesLanguage);
-        const bestCandidate = resolveBestCandidate(
+        const candidates = buildSubtitleCandidates(sessionPreference, savedTrack, settings.subtitlesLanguage);
+        const bestCandidate = resolveBestSubtitleCandidate(
             candidates,
             video.state.subtitlesTracks,
             video.state.extraSubtitlesTracks,
@@ -590,7 +479,7 @@ const useSubtitles = ({
                     video.state.subtitlesTracks,
                     video.state.selectedSubtitlesTrackId,
                 );
-                const language = normalizeLanguage(track?.lang);
+                const language = normalizeSubtitleLanguage(track?.lang);
                 lastSelectedTrack.current = {
                     id: video.state.selectedSubtitlesTrackId,
                     embedded: true,
@@ -601,7 +490,7 @@ const useSubtitles = ({
                     video.state.extraSubtitlesTracks,
                     video.state.selectedExtraSubtitlesTrackId,
                 );
-                const language = normalizeLanguage(track?.lang);
+                const language = normalizeSubtitleLanguage(track?.lang);
                 lastSelectedTrack.current = {
                     id: video.state.selectedExtraSubtitlesTrackId,
                     embedded: false,
@@ -616,7 +505,7 @@ const useSubtitles = ({
         const savedTrack = player.streamState?.subtitleTrack ?? lastSelectedTrack.current;
         const source = player.subtitlePreference?.source ??
             (savedTrack ? (savedTrack.embedded ? 'embedded' : 'external') : undefined);
-        const language = player.subtitlePreference?.language ?? normalizeLanguage(savedTrack?.language);
+        const language = player.subtitlePreference?.language ?? normalizeSubtitleLanguage(savedTrack?.language);
 
         trackSelectionLocked.current = false;
         appliedTrack.current = null;

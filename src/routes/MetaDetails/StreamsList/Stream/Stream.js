@@ -11,6 +11,7 @@ const { Button, Image, Popup } = require('stremio/components');
 const ActionButton = require('stremio/components/MetaPreview/ActionButton');
 const { default: useRouteFocused } = require('stremio/common/useRouteFocused');
 const StreamPlaceholder = require('./StreamPlaceholder');
+const { getDownloadAction } = require('./downloadAction');
 const styles = require('./styles');
 
 const getHref = (deepLinks, platformName) => {
@@ -97,9 +98,7 @@ const Stream = ({ className = '', compact = false, isEpg = false, videoId = unde
         return deepLinks?.externalPlayer?.streaming;
     }, [deepLinks]);
 
-    const downloadLink = React.useMemo(() => {
-        return deepLinks?.externalPlayer?.download;
-    }, [deepLinks]);
+    const downloadAction = React.useMemo(() => getDownloadAction(deepLinks), [deepLinks]);
 
     const magnetLink = React.useMemo(() => {
         return deepLinks?.externalPlayer?.magnet;
@@ -161,28 +160,6 @@ const Stream = ({ className = '', compact = false, isEpg = false, videoId = unde
                 });
         }
     }, [magnetLink]);
-
-    const copyDownloadLink = React.useCallback((event) => {
-        event.preventDefault();
-        closeMenu();
-        if (downloadLink) {
-            navigator.clipboard.writeText(downloadLink)
-                .then(() => {
-                    toast.show({
-                        type: 'success',
-                        title: t('PLAYER_COPY_DOWNLOAD_LINK_SUCCESS'),
-                        timeout: 4000
-                    });
-                })
-                .catch(() => {
-                    toast.show({
-                        type: 'error',
-                        title: t('PLAYER_COPY_DOWNLOAD_LINK_ERROR'),
-                        timeout: 4000,
-                    });
-                });
-        }
-    }, [downloadLink]);
 
     const copyStreamLink = React.useCallback((event) => {
         event.preventDefault();
@@ -277,15 +254,15 @@ const Stream = ({ className = '', compact = false, isEpg = false, videoId = unde
                         </Button>
                 }
                 {
-                    !isEpg && downloadLink &&
-                        <Button className={styles['context-menu-option-container']} title={t('CTX_DOWNLOAD_VIDEO')} onClick={copyDownloadLink}>
+                    !isEpg && downloadAction &&
+                        <Button className={styles['context-menu-option-container']} title={t('CTX_DOWNLOAD_VIDEO')} href={downloadAction.href} target={'_blank'} rel={'noopener noreferrer'} download={downloadAction.fileName} onClick={closeMenu}>
                             <Icon className={styles['menu-icon']} name={'download'} />
-                            <div className={styles['context-menu-option-label']}>{t('CTX_COPY_VIDEO_DOWNLOAD_LINK')}</div>
+                            <div className={styles['context-menu-option-label']}>{t('CTX_DOWNLOAD_VIDEO')}</div>
                         </Button>
                 }
             </div>
         );
-    }, [copyStreamLink, onClick, isEpg, href, target, download]);
+    }, [copyStreamLink, onClick, isEpg, href, target, download, downloadAction]);
 
     React.useEffect(() => {
         if (!routeFocused) {
