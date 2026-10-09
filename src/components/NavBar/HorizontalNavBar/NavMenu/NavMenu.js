@@ -7,11 +7,13 @@ const { default: useRouteFocused } = require('stremio/common/useRouteFocused');
 const Popup = require('stremio/components/Popup');
 const useBinaryState = require('stremio/common/useBinaryState');
 const NavMenuContent = require('./NavMenuContent');
+const useInstallApp = require('stremio/common/useInstallApp');
 const styles = require('./styles.less');
 
 const NavMenu = (props) => {
     const routeFocused = useRouteFocused();
     const [menuOpen, , closeMenu, toggleMenu] = useBinaryState(false);
+    const installApp = useInstallApp();
     const popupLabelOnClick = React.useCallback((event) => {
         if (!event.nativeEvent.togglePopupPrevented) {
             toggleMenu();
@@ -29,8 +31,8 @@ const NavMenu = (props) => {
         })
     ), [menuOpen, popupLabelOnClick, props.renderLabel]);
     const renderMenu = React.useCallback(() => (
-        <NavMenuContent onClick={popupMenuOnClick} />
-    ), []);
+        <NavMenuContent onClick={popupMenuOnClick} installApp={installApp} />
+    ), [installApp, popupMenuOnClick]);
     React.useEffect(() => {
         if (!routeFocused) {
             closeMenu();

@@ -17,7 +17,7 @@ const { withCoreSuspender } = require('stremio/common/CoreSuspender');
 const useStreamingServer = require('stremio/common/useStreamingServer');
 const styles = require('./styles');
 
-const NavMenuContent = ({ onClick }) => {
+const NavMenuContent = ({ onClick, installApp }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const core = useCore();
@@ -56,6 +56,17 @@ const NavMenuContent = ({ onClick }) => {
             console.error(e);
         }
     }, [handlePlayUrl]);
+    const onInstallClick = React.useCallback(async () => {
+        const result = await installApp.install();
+        if (result.type === 'help') {
+            toast.show({
+                type: 'info',
+                title: t('PWA_INSTALL_HELP_TITLE'),
+                message: t(result.key),
+                timeout: 8000
+            });
+        }
+    }, [installApp, toast, t]);
     const handleAuth = React.useCallback(() => {
         return profile.auth !== null
             ? logoutButtonOnClick()
@@ -98,6 +109,15 @@ const NavMenuContent = ({ onClick }) => {
                     null
             }
             <div className={styles['nav-menu-section']}>
+                {
+                    installApp.available ?
+                        <Button className={styles['nav-menu-option-container']} title={t('PWA_INSTALL')} onClick={onInstallClick}>
+                            <Icon className={styles['icon']} name={'download'} />
+                            <div className={styles['nav-menu-option-label']}>{t('PWA_INSTALL')}</div>
+                        </Button>
+                        :
+                        null
+                }
                 <Button className={styles['nav-menu-option-container']} title={ t('SETTINGS') } href={'#/settings'}>
                     <Icon className={styles['icon']} name={'settings'} />
                     <div className={styles['nav-menu-option-label']}>{ t('SETTINGS') }</div>
@@ -136,7 +156,11 @@ const NavMenuContent = ({ onClick }) => {
 };
 
 NavMenuContent.propTypes = {
-    onClick: PropTypes.func
+    onClick: PropTypes.func,
+    installApp: PropTypes.shape({
+        available: PropTypes.bool,
+        install: PropTypes.func
+    })
 };
 
 const NavMenuContentFallback = () => (
