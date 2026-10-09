@@ -2,7 +2,6 @@
 
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useCore } from 'stremio/core';
 import BottomSheet from 'stremio/components/BottomSheet';
 import ActionButton from 'stremio/components/MetaPreview/ActionButton';
 import StreamButton from '../../StreamsList/Stream';
@@ -16,7 +15,6 @@ type Props = {
 
 const Playback = ({ streams, mobile = false }: Props) => {
     const { t } = useTranslation();
-    const core = useCore();
     const [streamsOpen, setStreamsOpen] = useState(false);
     const readyStreams = streams.flatMap((resource) => {
         return resource.content.type === 'Ready' ?
@@ -31,9 +29,8 @@ const Playback = ({ streams, mobile = false }: Props) => {
 
     const openStreams = useCallback(() => setStreamsOpen(true), []);
     const closeStreams = useCallback(() => setStreamsOpen(false), []);
-    const onStreamClick = (stream: Stream) => {
+    const onStreamClick = () => {
         setStreamsOpen(false);
-        core.transport.analytics({ event: 'StreamClicked', args: { stream } });
     };
 
     const streamOptions = (
@@ -48,7 +45,7 @@ const Playback = ({ streams, mobile = false }: Props) => {
                     description={!mobile && soleStream ? [stream.name || addonName, stream.description].filter(Boolean).join('\n') : stream.description}
                     progress={null}
                     deepLinks={stream.deepLinks}
-                    onClick={() => onStreamClick(stream)}
+                    onClick={onStreamClick}
                 />
             ))}
             {
@@ -93,7 +90,7 @@ const Playback = ({ streams, mobile = false }: Props) => {
                         description={soleStream.addonName}
                         progress={null}
                         deepLinks={soleStream.stream.deepLinks}
-                        onClick={() => onStreamClick(soleStream.stream)}
+                        onClick={onStreamClick}
                     />
                     :
                     <ActionButton

@@ -13,6 +13,25 @@ const { default: useRouteFocused } = require('stremio/common/useRouteFocused');
 const StreamPlaceholder = require('./StreamPlaceholder');
 const styles = require('./styles');
 
+const getHref = (deepLinks, platformName) => {
+    if (!deepLinks) {
+        return null;
+    }
+
+    if (deepLinks.externalPlayer) {
+        if (deepLinks.externalPlayer.web) {
+            return deepLinks.externalPlayer.web;
+        }
+        if (deepLinks.externalPlayer.openPlayer) {
+            return deepLinks.externalPlayer.openPlayer[platformName] || deepLinks.externalPlayer.playlist || null;
+        }
+
+        return deepLinks.externalPlayer.playlist || deepLinks.player || null;
+    }
+
+    return deepLinks.player || null;
+};
+
 const Stream = ({ className = '', compact = false, isEpg = false, videoId = undefined, videoReleased = undefined, addonName, name, description, thumbnail = undefined, progress, deepLinks, externalPlayerCallbackCanMarkWatched, ...props }) => {
     const profile = useProfile();
     const toast = useToast();
@@ -57,23 +76,8 @@ const Stream = ({ className = '', compact = false, isEpg = false, videoId = unde
     }, []);
 
     const href = React.useMemo(() => {
-        return deepLinks ?
-            deepLinks.externalPlayer ?
-                deepLinks.externalPlayer.web ?
-                    deepLinks.externalPlayer.web
-                    :
-                    deepLinks.externalPlayer.openPlayer ?
-                        deepLinks.externalPlayer.openPlayer[platform.name] ?
-                            deepLinks.externalPlayer.openPlayer[platform.name]
-                            :
-                            deepLinks.externalPlayer.playlist
-                        :
-                        deepLinks.player
-                :
-                deepLinks.player
-            :
-            null;
-    }, [deepLinks]);
+        return getHref(deepLinks, platform.name);
+    }, [deepLinks, platform.name]);
 
     const download = React.useMemo(() => {
         return href === deepLinks?.externalPlayer?.playlist ?
@@ -306,6 +310,7 @@ const Stream = ({ className = '', compact = false, isEpg = false, videoId = unde
 };
 
 Stream.Placeholder = StreamPlaceholder;
+Stream.getHref = getHref;
 
 Stream.propTypes = {
     className: PropTypes.string,

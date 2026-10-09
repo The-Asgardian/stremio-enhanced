@@ -14,6 +14,7 @@ const Stream = require('./Stream');
 const styles = require('./styles');
 const { usePlatform, useProfile } = require('stremio/common');
 const { default: SeasonEpisodePicker } = require('../EpisodePicker');
+const { rankCandidates } = require('./rankCandidates');
 
 const ALL_ADDONS_KEY = 'ALL';
 
@@ -56,12 +57,6 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                     streams: streams.content.content.map((stream) => ({
                         ...stream,
                         onClick: () => {
-                            core.transport.analytics({
-                                event: 'StreamClicked',
-                                args: {
-                                    stream
-                                }
-                            });
                             if (profile.settings.playerType !== null) {
                                 core.transport.dispatch({
                                     action: 'MetaDetails',
@@ -86,6 +81,30 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
             :
             streamsByAddon[effectiveSelectedAddon].streams;
     }, [streamsByAddon, effectiveSelectedAddon]);
+    const rankedStreams = React.useMemo(() => {
+        const candidates = filteredStreams.map((stream, index) => ({
+            id: `candidate-${index}`,
+            stream,
+            signals: {},
+            launchable: Boolean(Stream.getHref(stream.deepLinks, platform.name)),
+        }));
+        const candidatesById = new Map(candidates.map((candidate) => [candidate.id, candidate]));
+        const ranking = rankCandidates(candidates);
+        const ordered = ranking.candidates
+            .map(({ id }) => candidatesById.get(id)?.stream)
+            .filter(Boolean);
+        const rejectedIndices = ranking.rejected
+            .map(({ id }) => Number(id.replace('candidate-', '')))
+            .filter((index) => Number.isInteger(index) && index >= 0 && index < filteredStreams.length);
+
+        return {
+            streams: [...ordered, ...rejectedIndices.map((index) => filteredStreams[index])],
+            recommended: ranking.candidates[0] ? {
+                ...ranking.candidates[0],
+                stream: candidatesById.get(ranking.candidates[0].id)?.stream,
+            } : null,
+        };
+    }, [filteredStreams, platform.name]);
     const selectableOptions = React.useMemo(() => {
         return {
             options: [
@@ -181,8 +200,26 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                             </div>
                             :
                             <React.Fragment>
+                                {
+                                    rankedStreams.recommended ?
+                                        <div className={styles['recommended-source-container']}>
+                                            <Stream
+                                                className={styles['recommended-source-button']}
+                                                compact={true}
+                                                name={t('CTX_PLAY')}
+                                                addonName={rankedStreams.recommended.stream.addonName}
+                                                videoId={video?.id}
+                                                videoReleased={video?.released}
+                                                deepLinks={rankedStreams.recommended.stream.deepLinks}
+                                                externalPlayerCallbackCanMarkWatched={externalPlayerCallbackCanMarkWatched}
+                                                aria-label={`${t('CTX_PLAY')}: ${rankedStreams.recommended.stream.name || rankedStreams.recommended.stream.addonName}`}
+                                                onClick={rankedStreams.recommended.stream.onClick}
+                                            />
+                                        </div>
+                                        : null
+                                }
                                 <div className={styles['streams-container']} ref={streamsContainerRef}>
-                                    {filteredStreams.map((stream, index) => (
+                                    {rankedStreams.streams.map((stream, index) => (
                                         <Stream
                                             key={index}
                                             videoId={video?.id}

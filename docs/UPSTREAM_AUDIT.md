@@ -50,7 +50,7 @@ Other upstream commands are `pnpm start`, `pnpm run lint`, and `pnpm run scan-tr
 1. Keep Stremio core, addon protocol and video abstraction intact while proving the first source-selection layer.
 2. Desktop web/PWA is the first development target. Mobile remains browser/PWA until an explicit native bridge decision. Android TV is a separate client milestone, with a native player likely required.
 3. Browser code cannot enforce a torrent kill switch, inspect OS routes, securely store secrets in a platform keychain by itself, or guarantee native codec support. A protected-torrent mode must fail closed in a controlled native/service layer; it is not an honest web-only feature.
-4. Candidate scoring cannot responsibly use the design's proposed readiness, startup, reliability, codec/HDR, throughput and permission dimensions until the source adapter or player produces those signals. Missing values must remain unknown, not be guessed from filename or file size.
+4. The M1 scorer now accepts explicit readiness, startup, reliability, codec/HDR, throughput and permission signals. The current upstream stream contract does not provide most of them, so missing values remain unknown; advertised resolution is parsed conservatively from stream names/descriptions and file size is never treated as measured bitrate. See [M1 source selection](./M1_SOURCE_SELECTION.md).
 5. Provider support, legal permissions, desktop shell, mobile packaging, and TV platforms remain open. No debrid/torrent/IPTV provider or unauthorized content source is selected by this audit.
 
 ## Upstream references
