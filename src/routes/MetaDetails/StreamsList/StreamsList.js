@@ -19,6 +19,7 @@ const ActionButton = require('stremio/components/MetaPreview/ActionButton');
 const { getDownloadAction } = require('./Stream/downloadAction');
 const { createDownloadQueueEntry, addDownloadQueueEntry } = require('./downloadQueue');
 const { getPlaybackOutcome, toRankingSignals } = require('../../Player/playbackOutcomeHistory');
+const { readRecommendHttpsSourcesOnly } = require('../../Settings/Streaming/sourcePrivacyPreference');
 
 const ALL_ADDONS_KEY = 'ALL';
 
@@ -27,6 +28,7 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
     const core = useCore();
     const platform = usePlatform();
     const profile = useProfile();
+    const recommendHttpsSourcesOnly = readRecommendHttpsSourcesOnly();
     const navigate = useNavigate();
     const goBack = useGoBack();
     const streamsContainerRef = React.useRef(null);
@@ -105,7 +107,9 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
             launchable: Boolean(Stream.getHref(stream.deepLinks, platform.name)),
         }));
         const candidatesById = new Map(candidates.map((candidate) => [candidate.id, candidate]));
-        const ranking = rankCandidates(candidates);
+        const ranking = rankCandidates(candidates, {
+            privacyMode: recommendHttpsSourcesOnly ? 'https-only' : 'standard',
+        });
         const ordered = ranking.candidates
             .map(({ id }) => candidatesById.get(id)?.stream)
             .filter(Boolean);
@@ -120,7 +124,7 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                 stream: candidatesById.get(ranking.candidates[0].id)?.stream,
             } : null,
         };
-    }, [filteredStreams, platform.name]);
+    }, [filteredStreams, platform.name, recommendHttpsSourcesOnly]);
     const recommendedDownload = rankedStreams.recommended ?
         getDownloadAction(rankedStreams.recommended.stream.deepLinks)
         :

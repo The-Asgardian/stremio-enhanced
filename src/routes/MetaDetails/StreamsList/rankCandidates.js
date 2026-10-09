@@ -70,6 +70,15 @@ const hasHttpsUrl = (stream) => {
     return url?.protocol === 'https:';
 };
 
+const hasTorrentMarker = (stream) => {
+    if (typeof stream?.infoHash === 'string' && stream.infoHash.trim().length > 0) {
+        return true;
+    }
+
+    const url = getUrl(stream?.url);
+    return url?.protocol === 'magnet:' || url?.protocol === 'torrent:';
+};
+
 const parseAdvertisedSignals = (stream = {}) => {
     const description = [stream.name, stream.description]
         .filter((value) => typeof value === 'string')
@@ -128,7 +137,7 @@ const evaluateCandidate = (candidate, { capabilities = {}, privacyMode = 'standa
         rejected.push('HDR mode is unsupported on this device.');
     }
 
-    if (privacyMode === 'https-only' && (kind === 'torrent' || !hasHttpsUrl(stream))) {
+    if (privacyMode === 'https-only' && (kind === 'torrent' || hasTorrentMarker(stream) || !hasHttpsUrl(stream))) {
         rejected.push('HTTPS-only privacy mode excludes this source.');
     }
 

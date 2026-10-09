@@ -1,11 +1,12 @@
 import React, { forwardRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import Icon from '@stremio/stremio-icons/react';
-import { Button, MultiselectMenu } from 'stremio/components';
+import { Button, MultiselectMenu, Toggle } from 'stremio/components';
 import { useToast } from 'stremio/common';
 import { Section, Option } from '../components';
 import URLsManager from './URLsManager';
 import useStreamingOptions from './useStreamingOptions';
+import useSourcePrivacyPreference from './useSourcePrivacyPreference';
 import styles from './Streaming.less';
 
 type Props = {
@@ -16,6 +17,7 @@ type Props = {
 const Streaming = forwardRef<HTMLDivElement, Props>(({ profile, streamingServer }: Props, ref) => {
     const { t } = useTranslation();
     const toast = useToast();
+    const { recommendHttpsSourcesOnly, setRecommendHttpsSourcesOnly } = useSourcePrivacyPreference();
 
     const {
         streamingServerRemoteUrlInput,
@@ -43,6 +45,21 @@ const Streaming = forwardRef<HTMLDivElement, Props>(({ profile, streamingServer 
     return (
         <Section ref={ref} label={'SETTINGS_NAV_STREAMING'}>
             <URLsManager selectedUrl={profile.settings.streamingServerUrl} settings={streamingServer.settings} />
+            <Option label={'SETTINGS_RECOMMEND_HTTPS_SOURCES_ONLY'}>
+                <div className={styles['source-privacy-setting']}>
+                    <div className={styles['source-privacy-help']}>
+                        {t('SETTINGS_RECOMMEND_HTTPS_SOURCES_ONLY_HELP')}
+                    </div>
+                    <Toggle
+                        className={styles['source-privacy-toggle']}
+                        aria-label={t('SETTINGS_RECOMMEND_HTTPS_SOURCES_ONLY')}
+                        aria-pressed={recommendHttpsSourcesOnly}
+                        tabIndex={-1}
+                        checked={recommendHttpsSourcesOnly}
+                        onClick={() => setRecommendHttpsSourcesOnly(!recommendHttpsSourcesOnly)}
+                    />
+                </div>
+            </Option>
             {
                 streamingServerRemoteUrlInput.value !== null &&
                     <Option className={styles['configure-input-container']} label={'SETTINGS_REMOTE_URL'}>

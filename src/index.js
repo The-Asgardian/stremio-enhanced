@@ -30,6 +30,8 @@ translations['en-US'].translation.PWA_INSTALL = 'Install app';
 translations['en-US'].translation.PWA_INSTALL_HELP_TITLE = 'Install Stremio on this device';
 translations['en-US'].translation.PWA_INSTALL_IOS_HELP = 'Tap Share, then choose “Add to Home Screen”.';
 translations['en-US'].translation.PWA_INSTALL_BROWSER_HELP = 'Open your browser menu and choose “Install app” or “Add to Home Screen”.';
+translations['en-US'].translation.SETTINGS_RECOMMEND_HTTPS_SOURCES_ONLY = 'Recommend HTTPS sources only';
+translations['en-US'].translation.SETTINGS_RECOMMEND_HTTPS_SOURCES_ONLY_HELP = 'Filters one-click recommendations only. You can still manually play any listed source. This does not secure network routes or change add-on data.';
 
 i18n
     .use(initReactI18next)

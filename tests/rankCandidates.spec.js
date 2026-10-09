@@ -58,12 +58,28 @@ describe('source candidate ranking', () => {
             { id: 'direct', stream: { url: secretUrl }, signals: { readyToPlay: true } },
             { id: 'torrent', stream: { url: 'magnet:?xt=urn:btih:synthetic-hash' }, signals: {} },
             { id: 'http', stream: { url: 'http://media.example/video.mp4' }, signals: {} },
+            {
+                id: 'mislabeled-torrent',
+                stream: { sourceKind: 'https-file', url: 'https://media.example/video.mp4', infoHash: 'synthetic-hash' },
+                signals: {},
+            },
         ], { privacyMode: 'https-only' });
 
         expect(result.candidates.map(({ id }) => id)).toEqual(['direct']);
-        expect(result.rejected).toHaveLength(2);
+        expect(result.rejected.map(({ id }) => id)).toEqual(['torrent', 'http', 'mislabeled-torrent']);
         expect(JSON.stringify(result)).not.toContain('secret');
         expect(JSON.stringify(result)).not.toContain('synthetic-hash');
+    });
+
+    test('HTTPS-only policy requires an explicit HTTPS URL even when source kind claims HTTPS', () => {
+        const result = rankCandidates([
+            { id: 'magnet-mislabeled', stream: { sourceKind: 'https-file', url: 'magnet:?xt=urn:btih:synthetic-hash' }, signals: {} },
+            { id: 'missing-url', stream: { sourceKind: 'https-file' }, signals: {} },
+            { id: 'empty-info-hash', stream: { sourceKind: 'https-file', url: 'https://media.example/video.mp4', infoHash: '  ' }, signals: {} },
+        ], { privacyMode: 'https-only' });
+
+        expect(result.candidates.map(({ id }) => id)).toEqual(['empty-info-hash']);
+        expect(result.rejected.map(({ id }) => id)).toEqual(['magnet-mislabeled', 'missing-url']);
     });
 
     test('protected torrent mode fails closed when the route is not confirmed', () => {

@@ -18,7 +18,7 @@ The scorer uses the design's starting weights:
 
 Codec and HDR labels are parsed only as advertised metadata. They become hard filters only when a device capability set is supplied. Resolution above a supplied maximum, an unavailable source, or a declared unsupported source type is rejected. Missing fields remain unknown. Ties retain provider order.
 
-The adapter also implements `standard`, `https-only`, and `protected-torrent` policy checks. The current web UI uses `standard`; protected routing remains unavailable in a browser-only app per [ADR 0002](./adr/0002-privacy-enforcement.md).
+The adapter also implements `standard`, `https-only`, and `protected-torrent` policy checks. `https-only` requires an absolute HTTPS `stream.url` and rejects explicit torrent markers (a non-empty `infoHash` or a `magnet:`/`torrent:` URL), even if a descriptor declares a conflicting source kind. This checks only the initial advertised URL scheme; it does not inspect redirects, HLS/DASH manifests or segments, external-player behavior, or OS routing, and it does not provide anonymity. The current web UI uses `standard`; protected routing remains unavailable in a browser-only app per [ADR 0002](./adr/0002-privacy-enforcement.md).
 
 ## Local playback outcomes
 
