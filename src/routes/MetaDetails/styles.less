@@ -86,6 +86,38 @@
             padding-left: max(1rem, calc(4rem - var(--safe-area-inset-left)));
         }
 
+        .resume-episode-action {
+            display: inline-flex;
+            flex-direction: row;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem 0.75rem;
+            margin-top: 1rem;
+            padding: 0.8rem 1.1rem;
+            border: var(--focus-outline-size) solid transparent;
+            border-radius: var(--border-radius);
+            background-color: var(--overlay-color);
+            text-align: left;
+
+            &:hover, &:focus {
+                outline: var(--focus-outline-size) solid var(--primary-foreground-color);
+                background-color: var(--secondary-accent-color);
+            }
+        }
+
+        .resume-episode-icon {
+            flex: none;
+            width: 1.2rem;
+            height: 1.2rem;
+        }
+
+        .resume-episode-number {
+            flex-basis: 100%;
+            margin-left: 1.95rem;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
         .spacing {
             flex: 1;
         }

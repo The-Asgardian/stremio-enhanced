@@ -9,6 +9,8 @@ const { useContentGamepadNavigation } = require('stremio/services/GamepadNavigat
 const { withCoreSuspender, useProfile } = require('stremio/common');
 const { useNavigateWithOrigin } = require('stremio-router');
 const { HorizontalNavBar, DelayedRenderer, Image, MetaPreview } = require('stremio/components');
+const { Button } = require('stremio/components');
+const { default: Icon } = require('@stremio/stremio-icons/react');
 const StreamsList = require('./StreamsList');
 const VideosList = require('./VideosList');
 const { default: LiveTvDetails } = require('./LiveTvDetails');
@@ -16,6 +18,7 @@ const { default: LiveTvPlaceholder } = require('./LiveTvDetails/Placeholder');
 const useMetaDetails = require('./useMetaDetails');
 const useSeason = require('./useSeason');
 const { default: useExternalPlayerCallback } = require('./useExternalPlayerCallback');
+const getResumeVideo = require('./resumeVideo');
 const styles = require('./styles');
 
 const GAMEPAD_HANDLER_ID = 'metadetails';
@@ -37,6 +40,7 @@ const MetaDetails = () => {
     }), [type, id, videoId]);
     const metaDetails = useMetaDetails(urlParams);
     const readyMeta = metaDetails.metaItem?.content.type === 'Ready' ? metaDetails.metaItem.content.content : null;
+    const resumeVideo = React.useMemo(() => getResumeVideo(readyMeta?.videos, metaDetails.libraryItem), [readyMeta?.videos, metaDetails.libraryItem]);
     const metaAddonUrl = metaDetails.metaItem?.addon.transportUrl;
     const isEpgProvider = React.useMemo(() => {
         return profile.addons.some((addon) => addon.transportUrl === metaAddonUrl && addon.manifest.behaviorHints?.epgProvider === true);
@@ -242,7 +246,30 @@ const MetaDetails = () => {
                                             toggleWatched={toggleWatched}
                                             metaId={metaDetails.metaItem.content.content.id}
                                             ratingInfo={metaDetails.ratingInfo}
-                                        />
+                                        >
+                                            {
+                                                resumeVideo !== null ?
+                                                    <Button
+                                                        className={styles['resume-episode-action']}
+                                                        href={resumeVideo.deepLinks.player}
+                                                        title={t('LIBRARY_RESUME')}
+                                                        aria-label={t('LIBRARY_RESUME')}
+                                                    >
+                                                        <Icon className={styles['resume-episode-icon']} name={'play'} />
+                                                        <span>{t('LIBRARY_RESUME')}</span>
+                                                        {
+                                                            typeof resumeVideo.season === 'number' && typeof resumeVideo.episode === 'number' ?
+                                                                <span className={styles['resume-episode-number']}>
+                                                                    {t('SEASON_NUMBER', { season: resumeVideo.season })} · {t('EPISODE')} {resumeVideo.episode}
+                                                                </span>
+                                                                :
+                                                                null
+                                                        }
+                                                    </Button>
+                                                    :
+                                                    null
+                                            }
+                                        </MetaPreview>
                                     </React.Fragment>
                 }
                 <div className={styles['spacing']} />
