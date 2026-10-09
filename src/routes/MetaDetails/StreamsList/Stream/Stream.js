@@ -269,7 +269,7 @@ const Stream = ({ className = '', compact = false, isEpg = false, videoId = unde
 };
 
 Stream.Placeholder = StreamPlaceholder;
-Stream.getHref = getHref;
+Stream.getHref = getStreamHref;
 
 Stream.propTypes = {
     className: PropTypes.string,

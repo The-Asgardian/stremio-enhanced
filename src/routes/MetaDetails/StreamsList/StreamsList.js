@@ -71,7 +71,8 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                         ...stream,
                         addonId: streams.addon.manifest.id,
                         onClick: () => {
-                            if (profile.settings.playerType !== null) {
+                            const href = Stream.getHref(stream.deepLinks, platform.name, profile.settings.playerType);
+                            if (profile.settings.playerType && href !== stream.deepLinks?.player) {
                                 core.transport.dispatch({
                                     action: 'MetaDetails',
                                     args: {
@@ -87,7 +88,7 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
 
                 return streamsByAddon;
             }, {});
-    }, [props.streams, profile.settings.playerType]);
+    }, [props.streams, profile.settings.playerType, platform.name]);
     const effectiveSelectedAddon = Object.prototype.hasOwnProperty.call(streamsByAddon, selectedAddon) ? selectedAddon : ALL_ADDONS_KEY;
     const filteredStreams = React.useMemo(() => {
         return effectiveSelectedAddon === ALL_ADDONS_KEY ?
@@ -104,7 +105,7 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                 platform: platform.name,
                 kind: classifySource(stream),
             })) ?? {},
-            launchable: Boolean(Stream.getHref(stream.deepLinks, platform.name)),
+            launchable: Boolean(Stream.getHref(stream.deepLinks, platform.name, profile.settings.playerType)),
         }));
         const candidatesById = new Map(candidates.map((candidate) => [candidate.id, candidate]));
         const ranking = rankCandidates(candidates, {
@@ -124,7 +125,7 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                 stream: candidatesById.get(ranking.candidates[0].id)?.stream,
             } : null,
         };
-    }, [filteredStreams, platform.name, recommendHttpsSourcesOnly]);
+    }, [filteredStreams, platform.name, profile.settings.playerType, recommendHttpsSourcesOnly]);
     const recommendedDownload = rankedStreams.recommended ?
         getDownloadAction(rankedStreams.recommended.stream.deepLinks)
         :
