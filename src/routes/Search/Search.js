@@ -6,8 +6,10 @@ const useTranslate = require('stremio/common/useTranslate');
 const { default: useVisibleCatalogs } = require('stremio/common/useVisibleCatalogs');
 const { default: Icon } = require('@stremio/stremio-icons/react');
 const { withCoreSuspender } = require('stremio/common');
-const { Image, MainNavBars, MetaItem, MetaRow } = require('stremio/components');
+const { Button, Image, MainNavBars, MetaItem, MetaRow } = require('stremio/components');
 const useSearch = require('./useSearch');
+const useLocalSearch = require('../../components/NavBar/HorizontalNavBar/SearchBar/useLocalSearch');
+const { getSearchResultState } = require('./searchResults');
 const styles = require('./styles');
 const { useSearchParams } = require('react-router-dom');
 
@@ -27,6 +29,14 @@ const Search = () => {
             :
             null;
     }, [search.selected]);
+    const localSearch = useLocalSearch();
+    const resultState = React.useMemo(() => getSearchResultState(search.catalogs), [search.catalogs]);
+    const suggestions = React.useMemo(() => {
+        const normalizedQuery = query?.trim().toLocaleLowerCase();
+        return (localSearch.items || [])
+            .filter(({ query: suggestion }) => typeof suggestion === 'string' && suggestion.trim().toLocaleLowerCase() !== normalizedQuery)
+            .slice(0, 3);
+    }, [localSearch.items, query]);
     const { catalogRows, scrollContainerRef, onScroll } = useVisibleCatalogs({
         catalogs: search.catalogs,
         loadRange: loadSearchRows,
@@ -60,7 +70,7 @@ const Search = () => {
                             </div>
                         </div>
                         :
-                        search.catalogs.length === 0 ?
+                        resultState === 'no-catalogs' ?
                             <div className={styles['message-container']}>
                                 <Image
                                     className={styles['image']}
@@ -70,43 +80,69 @@ const Search = () => {
                                 <div className={styles['message-label']}>{ t.string('STREMIO_TV_SEARCH_NO_ADDONS') }</div>
                             </div>
                             :
-                            catalogRows.map(({ catalog, index }) => {
-                                switch (catalog.content?.type) {
-                                    case 'Ready': {
-                                        return (
-                                            <MetaRow
-                                                key={index}
-                                                className={classnames(styles['search-row'], styles[`search-row-${catalog.content.content[0].posterShape}`], 'animation-fade-in')}
-                                                catalog={catalog}
-                                                itemComponent={MetaItem}
-                                            />
-                                        );
+                            resultState === 'empty' ?
+                                <div className={styles['message-container']}>
+                                    <Image
+                                        className={styles['image']}
+                                        src={require('/assets/images/empty.png')}
+                                        alt={' '}
+                                    />
+                                    <div className={styles['message-label']}>{t.string('SEARCH_NO_RESULTS')}</div>
+                                    {
+                                        suggestions.length > 0 ?
+                                            <div className={styles['suggestions-container']}>
+                                                <div className={styles['suggestions-title']}>{t.string('SEARCH_SUGGESTIONS')}</div>
+                                                {suggestions.map(({ query: suggestion, deepLinks }, index) => (
+                                                    <Button key={`${suggestion}-${index}`} className={styles['suggestion']} href={deepLinks.search}>
+                                                        {suggestion}
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                            : null
                                     }
-                                    case 'Err': {
-                                        if (catalog.content.content !== 'EmptyContent') {
+                                </div>
+                                :
+                                catalogRows.map(({ catalog, index }) => {
+                                    switch (catalog.content?.type) {
+                                        case 'Ready': {
+                                            if (!Array.isArray(catalog.content.content) || catalog.content.content.length === 0) {
+                                                return null;
+                                            }
+                                            const posterShape = catalog.content.content[0].posterShape || 'poster';
                                             return (
                                                 <MetaRow
                                                     key={index}
-                                                    className={classnames(styles['search-row'], 'animation-fade-in')}
+                                                    className={classnames(styles['search-row'], styles[`search-row-${posterShape}`], 'animation-fade-in')}
                                                     catalog={catalog}
-                                                    message={catalog.content.content}
+                                                    itemComponent={MetaItem}
                                                 />
                                             );
                                         }
-                                        return null;
+                                        case 'Err': {
+                                            if (catalog.content.content !== 'EmptyContent') {
+                                                return (
+                                                    <MetaRow
+                                                        key={index}
+                                                        className={classnames(styles['search-row'], 'animation-fade-in')}
+                                                        catalog={catalog}
+                                                        message={catalog.content.content}
+                                                    />
+                                                );
+                                            }
+                                            return null;
+                                        }
+                                        default: {
+                                            return (
+                                                <MetaRow.Placeholder
+                                                    key={index}
+                                                    className={classnames(styles['search-row'], styles['search-row-poster'], 'animation-fade-in')}
+                                                    catalog={catalog}
+                                                    title={t.catalogTitle(catalog)}
+                                                />
+                                            );
+                                        }
                                     }
-                                    default: {
-                                        return (
-                                            <MetaRow.Placeholder
-                                                key={index}
-                                                className={classnames(styles['search-row'], styles['search-row-poster'], 'animation-fade-in')}
-                                                catalog={catalog}
-                                                title={t.catalogTitle(catalog)}
-                                            />
-                                        );
-                                    }
-                                }
-                            })
+                                })
                 }
             </div>
         </MainNavBars>
