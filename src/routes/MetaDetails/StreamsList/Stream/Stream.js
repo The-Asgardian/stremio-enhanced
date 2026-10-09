@@ -12,26 +12,8 @@ const ActionButton = require('stremio/components/MetaPreview/ActionButton');
 const { default: useRouteFocused } = require('stremio/common/useRouteFocused');
 const StreamPlaceholder = require('./StreamPlaceholder');
 const { getDownloadAction } = require('./downloadAction');
+const { getStreamHref, isM3UPlaylistLink } = require('./streamHref');
 const styles = require('./styles');
-
-const getHref = (deepLinks, platformName) => {
-    if (!deepLinks) {
-        return null;
-    }
-
-    if (deepLinks.externalPlayer) {
-        if (deepLinks.externalPlayer.web) {
-            return deepLinks.externalPlayer.web;
-        }
-        if (deepLinks.externalPlayer.openPlayer) {
-            return deepLinks.externalPlayer.openPlayer[platformName] || deepLinks.externalPlayer.playlist || null;
-        }
-
-        return deepLinks.externalPlayer.playlist || deepLinks.player || null;
-    }
-
-    return deepLinks.player || null;
-};
 
 const Stream = ({ className = '', compact = false, isEpg = false, videoId = undefined, videoReleased = undefined, addonName, name, description, thumbnail = undefined, progress, deepLinks, externalPlayerCallbackCanMarkWatched, onDownloadRequest, ...props }) => {
     const profile = useProfile();
@@ -77,22 +59,22 @@ const Stream = ({ className = '', compact = false, isEpg = false, videoId = unde
     }, []);
 
     const href = React.useMemo(() => {
-        return getHref(deepLinks, platform.name);
-    }, [deepLinks, platform.name]);
+        return getStreamHref(deepLinks, platform.name, profile.settings.playerType);
+    }, [deepLinks, platform.name, profile.settings.playerType]);
 
     const download = React.useMemo(() => {
-        return href === deepLinks?.externalPlayer?.playlist ?
+        return isM3UPlaylistLink(href, deepLinks, profile.settings.playerType) ?
             deepLinks.externalPlayer.fileName
             :
             null;
-    }, [href, deepLinks]);
+    }, [href, deepLinks, profile.settings.playerType]);
 
     const target = React.useMemo(() => {
-        return href === deepLinks?.externalPlayer?.web ?
+        return Boolean(profile.settings.playerType) && href === deepLinks?.externalPlayer?.web ?
             '_blank'
             :
             null;
-    }, [href, deepLinks]);
+    }, [href, deepLinks, profile.settings.playerType]);
 
     const streamLink = React.useMemo(() => {
         return deepLinks?.externalPlayer?.streaming;
@@ -123,7 +105,7 @@ const Stream = ({ className = '', compact = false, isEpg = false, videoId = unde
 
         if (isEpg) closeMenu();
 
-        if (profile.settings.playerType !== null) {
+        if (profile.settings.playerType && href !== deepLinks?.player) {
             if (profile.settings.playerType !== 'infuse' || !platform.shell.active || !externalPlayerCallbackCanMarkWatched) {
                 markVideoAsWatched();
             }
@@ -137,7 +119,7 @@ const Stream = ({ className = '', compact = false, isEpg = false, videoId = unde
         if (typeof props.onClick === 'function') {
             props.onClick(event);
         }
-    }, [props.onClick, profile.settings.playerType, platform.shell.active, externalPlayerCallbackCanMarkWatched, markVideoAsWatched, isEpg, closeMenu]);
+    }, [props.onClick, profile.settings.playerType, href, deepLinks, platform.shell.active, externalPlayerCallbackCanMarkWatched, markVideoAsWatched, isEpg, closeMenu]);
 
     const copyMagnetLink = React.useCallback((event) => {
         event.preventDefault();
