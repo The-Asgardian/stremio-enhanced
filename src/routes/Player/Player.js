@@ -42,6 +42,8 @@ const styles = require('./styles');
 const Video = require('./Video');
 const { default: Indicator } = require('./Indicator/Indicator');
 const { default: useMediaSession } = require('./useMediaSession');
+const { classifySource } = require('../MetaDetails/StreamsList/rankCandidates');
+const { recordPlaybackOutcome } = require('./playbackOutcomeHistory');
 
 const GAMEPAD_HANDLER_ID = 'player';
 
@@ -89,6 +91,7 @@ const Player = () => {
     const playerRef = React.useRef(null);
     const bufferingRef = React.useRef();
     const errorRef = React.useRef();
+    const playbackOutcomeSession = React.useRef(null);
 
     const [immersed, setImmersed] = React.useState(true);
     const setImmersedDebounced = React.useCallback(debounce(setImmersed, 3000), []);
@@ -267,6 +270,14 @@ const Player = () => {
 
     const onError = React.useCallback((error) => {
         logSafePlaybackError('Player', error);
+        const outcomeSession = playbackOutcomeSession.current;
+        if (error?.critical && outcomeSession && !outcomeSession.completed && !outcomeSession.casting) {
+            outcomeSession.completed = true;
+            recordPlaybackOutcome({
+                ...outcomeSession.identity,
+                outcome: 'failure',
+            });
+        }
         if (error.critical) {
             setError(error);
         } else {
@@ -539,6 +550,17 @@ const Player = () => {
         video.unload();
 
         if (player.selected && player.stream?.type === 'Ready' && streamingServer.settings?.type !== 'Loading') {
+            playbackOutcomeSession.current = !casting ? {
+                identity: {
+                    addonId: player.addon?.manifest?.id,
+                    platform: platform.name,
+                    kind: classifySource(player.selected.stream),
+                },
+                startedAt: Date.now(),
+                completed: false,
+                casting: false,
+                sawPaused: video.state.paused !== false,
+            } : null;
             video.load({
                 stream: {
                     ...player.stream.content,
@@ -573,6 +595,24 @@ const Player = () => {
             });
         }
     }, [streamingServer.baseUrl, player.selected, player.stream, streamSubtitles, forceTranscoding, casting, cancelKeyboardSeek]);
+
+    React.useEffect(() => {
+        const outcomeSession = playbackOutcomeSession.current;
+        if (!outcomeSession || outcomeSession.completed || outcomeSession.casting) {
+            return;
+        }
+        if (video.state.paused !== false) {
+            outcomeSession.sawPaused = true;
+            return;
+        }
+        if (!outcomeSession.sawPaused || video.state.manifest === null || video.state.stream === null) return;
+        outcomeSession.completed = true;
+        recordPlaybackOutcome({
+            ...outcomeSession.identity,
+            outcome: 'success',
+            startupMs: Math.min(120000, Math.max(0, Date.now() - outcomeSession.startedAt)),
+        });
+    }, [video.state.manifest, video.state.stream, video.state.paused]);
 
     React.useEffect(() => {
         !seeking && timeChanged(video.state.time, video.state.duration, video.state.manifest?.name);

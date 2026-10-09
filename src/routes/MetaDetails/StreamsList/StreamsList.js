@@ -14,10 +14,11 @@ const Stream = require('./Stream');
 const styles = require('./styles');
 const { usePlatform, useProfile } = require('stremio/common');
 const { default: SeasonEpisodePicker } = require('../EpisodePicker');
-const { rankCandidates } = require('./rankCandidates');
+const { classifySource, rankCandidates } = require('./rankCandidates');
 const ActionButton = require('stremio/components/MetaPreview/ActionButton');
 const { getDownloadAction } = require('./Stream/downloadAction');
 const { createDownloadQueueEntry, addDownloadQueueEntry } = require('./downloadQueue');
+const { getPlaybackOutcome, toRankingSignals } = require('../../Player/playbackOutcomeHistory');
 
 const ALL_ADDONS_KEY = 'ALL';
 
@@ -66,6 +67,7 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                     addon: streams.addon,
                     streams: streams.content.content.map((stream) => ({
                         ...stream,
+                        addonId: streams.addon.manifest.id,
                         onClick: () => {
                             if (profile.settings.playerType !== null) {
                                 core.transport.dispatch({
@@ -95,7 +97,11 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
         const candidates = filteredStreams.map((stream, index) => ({
             id: `candidate-${index}`,
             stream,
-            signals: {},
+            signals: toRankingSignals(getPlaybackOutcome({
+                addonId: stream.addonId,
+                platform: platform.name,
+                kind: classifySource(stream),
+            })) ?? {},
             launchable: Boolean(Stream.getHref(stream.deepLinks, platform.name)),
         }));
         const candidatesById = new Map(candidates.map((candidate) => [candidate.id, candidate]));

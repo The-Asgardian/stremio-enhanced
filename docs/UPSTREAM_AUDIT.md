@@ -29,7 +29,7 @@ The SDK protocol documents HTTP(S) resources and stream representations; current
 | Mobile | Installable PWA; responsive UI paths and platform detection; web playback depends on browser capabilities. | Useful baseline for Android/iOS, but offline media, OS keychain use, background downloads and native player parity need a native bridge/app. |
 | TV | Gamepad/navigation hooks and web EPG/Live TV UI are present in this checkout; web UI has no audited native TV packaging or TV-specific player backend here. | A browser deployment may work on some TVs but is not a supported substitute for an Android TV/Google TV client. Remote focus, text entry, performance and codec support need device validation. |
 
-Native EPG and Live TV UI are already in upstream web, so the design's IPTV milestone should begin with a gap audit and authorized playlist/EPG ingestion rather than reimplementing guide display. The SDK documents native EPG. No licensed stream list or media fixtures are included.
+Native EPG and Live TV UI are already in upstream web, so the design's IPTV milestone should begin with a gap audit and authorized playlist/EPG ingestion rather than reimplementing guide display. The exact missing core contract and recommended import slice are documented in [M4 Live TV playlist and guide import gap](./M4_LIVE_TV_IMPORT_GAP.md). The SDK documents native EPG. No licensed stream list or media fixtures are included.
 
 ## Build and test baseline
 
