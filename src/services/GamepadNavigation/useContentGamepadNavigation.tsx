@@ -2,11 +2,11 @@
 
 import { useEffect, useRef } from 'react';
 import { useGamepad } from '../GamepadContext';
-
-const FOCUSABLE = '[tabindex]:not([data-focus-guard])';
+import { focusWithGamepadIndicator, getDirectionalCandidate, getFocusableElements } from './spatialNavigation';
 
 const getActiveScope = (fallback: HTMLDivElement | null): HTMLElement | null => {
-    if (document.querySelector('[data-gamepad-modal]')) return null;
+    const gamepadModal = document.querySelector<HTMLElement>('[data-gamepad-modal]');
+    if (gamepadModal) return gamepadModal;
 
     const modals = document.querySelectorAll<HTMLElement>('.modals-container');
     for (const modal of modals) {
@@ -28,6 +28,7 @@ const useContentGamepadNavigation = (
     const wasInOverlay = useRef(false);
 
     useEffect(() => {
+        const section = sectionRef.current;
         const handleGamepadNavigation = (
             direction: 'left' | 'right' | 'up' | 'down'
         ) => {
@@ -40,54 +41,12 @@ const useContentGamepadNavigation = (
             }
             wasInOverlay.current = inOverlay;
 
-            const elements = Array.from(
-                scope?.querySelectorAll<HTMLDivElement>(FOCUSABLE) || []
-            );
+            const elements = getFocusableElements(scope);
             if (elements.length === 0) return;
 
-            const activeElement = (scope ?? document)?.querySelector<HTMLDivElement>(':focus');
-
-            if (!activeElement) {
-                elements[0].focus();
-                return;
-            }
-
-            let closestElement: HTMLDivElement | null = null;
-            const cur = activeElement.getBoundingClientRect();
-            const cx = cur.left + cur.width / 2;
-            const cy = cur.top + cur.height / 2;
-            let closestDistance = Infinity;
-
-            elements.forEach((el) => {
-                if (el === activeElement) return;
-                const r = el.getBoundingClientRect();
-                const ex = r.left + r.width / 2;
-                const ey = r.top + r.height / 2;
-
-                const isCorrectDirection =
-                    (direction === 'left' && ex < cx) ||
-                    (direction === 'right' && ex > cx) ||
-                    (direction === 'up' && ey < cy) ||
-                    (direction === 'down' && ey > cy);
-
-                if (!isCorrectDirection) return;
-
-                const dx = ex - cx;
-                const dy = ey - cy;
-                const isHorizontal = direction === 'left' || direction === 'right';
-                const primary = isHorizontal ? Math.abs(dx) : Math.abs(dy);
-                const secondary = isHorizontal ? Math.abs(dy) : Math.abs(dx);
-                const distance = primary + secondary * 3;
-
-                if (distance < closestDistance) {
-                    closestDistance = distance;
-                    closestElement = el;
-                }
-            });
-
-            if (closestElement) {
-                closestElement.focus();
-            }
+            const activeElement = scope?.querySelector<HTMLElement>(':focus') ?? null;
+            const nextElement = getDirectionalCandidate(elements, activeElement, direction);
+            if (nextElement) focusWithGamepadIndicator(nextElement, scope);
         };
 
         const onSelect = () => {
@@ -100,21 +59,19 @@ const useContentGamepadNavigation = (
             }
             wasInOverlay.current = inOverlay;
 
-            const elements = Array.from(
-                scope?.querySelectorAll<HTMLDivElement>(FOCUSABLE) || []
-            );
+            const elements = getFocusableElements(scope);
             if (elements.length === 0) {
                 if (lastFocused.current) {
-                    lastFocused.current.focus();
+                    focusWithGamepadIndicator(lastFocused.current, sectionRef.current);
                     wasInOverlay.current = false;
                 }
                 return;
             }
 
-            const activeElement = (scope ?? document)?.querySelector<HTMLDivElement>(':focus');
+            const activeElement = scope?.querySelector<HTMLElement>(':focus') ?? null;
 
             if (!activeElement) {
-                elements[0].focus();
+                focusWithGamepadIndicator(elements[0], scope);
                 return;
             }
             const isSelect = Array.from(activeElement.classList).some((cls) => cls.startsWith('select-input'));
@@ -124,7 +81,7 @@ const useContentGamepadNavigation = (
                 requestAnimationFrame(() => {
                     const stillInOverlay = getActiveScope(sectionRef.current) !== sectionRef.current;
                     if (!stillInOverlay && wasInOverlay.current && lastFocused.current) {
-                        lastFocused.current.focus();
+                        focusWithGamepadIndicator(lastFocused.current, sectionRef.current);
                         wasInOverlay.current = false;
                     }
                 });
@@ -134,9 +91,18 @@ const useContentGamepadNavigation = (
         gamepad?.on('analog', gamepadHandlerId, handleGamepadNavigation);
         gamepad?.on('buttonA', gamepadHandlerId, onSelect);
 
+        const clearGamepadFocus = () => {
+            section?.querySelectorAll('[data-gamepad-focused="true"]').forEach((element) => {
+                element.removeAttribute('data-gamepad-focused');
+            });
+        };
+        section?.addEventListener('pointerdown', clearGamepadFocus);
+
         return () => {
             gamepad?.off('analog', gamepadHandlerId);
             gamepad?.off('buttonA', gamepadHandlerId);
+            section?.removeEventListener('pointerdown', clearGamepadFocus);
+            clearGamepadFocus();
         };
     }, [gamepad, gamepadHandlerId, sectionRef]);
 };

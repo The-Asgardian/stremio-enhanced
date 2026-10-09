@@ -134,6 +134,17 @@
     scrollbar-color: var(--overlay-color) transparent;
 }
 
+:global(:focus-visible) {
+    outline: 3px solid var(--primary-accent-color);
+    outline-offset: 3px;
+}
+
+:global([data-gamepad-focused="true"]) {
+    outline: 3px solid #fff !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 0 6px rgba(123, 91, 245, 0.72) !important;
+}
+
 ::-webkit-scrollbar {
     width: var(--scroll-bar-size);
     height: var(--scroll-bar-size);
