@@ -8,8 +8,7 @@ describe('local download list', () => {
             href: 'https://media.example.test/movie.mkv?token=secret',
             fileName: 'movie.mkv',
         }, 'Example film', 100)).toEqual({
-            id: '100-https://media.example.test/movie.mkv?token=secret',
-            href: 'https://media.example.test/movie.mkv?token=secret',
+            id: expect.stringMatching(/^100-\d+$/),
             fileName: 'movie.mkv',
             title: 'Example film',
             requestedAt: 100,

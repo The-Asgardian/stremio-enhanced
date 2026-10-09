@@ -1,5 +1,6 @@
 const MAX_RECENT_DOWNLOADS = 10;
 const { isAllowedDownloadUrl } = require('./Stream/downloadAction');
+let nextEntryId = 0;
 
 const createDownloadQueueEntry = (action, title, now = Date.now()) => {
     if (!action || !isAllowedDownloadUrl(action.href) || typeof action.fileName !== 'string' || !action.fileName.trim()) {
@@ -7,8 +8,7 @@ const createDownloadQueueEntry = (action, title, now = Date.now()) => {
     }
 
     return {
-        id: `${now}-${action.href.trim()}`,
-        href: action.href.trim(),
+        id: `${now}-${nextEntryId++}`,
         fileName: action.fileName.trim(),
         title: typeof title === 'string' && title.trim() ? title.trim() : action.fileName,
         requestedAt: now,
@@ -20,7 +20,7 @@ const addDownloadQueueEntry = (entries, entry) => {
         return Array.isArray(entries) ? entries : [];
     }
 
-    return [entry, ...(Array.isArray(entries) ? entries.filter(({ href }) => href !== entry.href) : [])]
+    return [entry, ...(Array.isArray(entries) ? entries.filter(({ fileName, title }) => fileName !== entry.fileName || title !== entry.title) : [])]
         .slice(0, MAX_RECENT_DOWNLOADS);
 };
 

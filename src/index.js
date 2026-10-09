@@ -25,6 +25,7 @@ const { FileDropProvider, PlatformProvider } = require('./common');
 const translations = Object.fromEntries(Object.entries(stremioTranslations()).map(([key, value]) => [key, {
     translation: value
 }]));
+translations['en-US'].translation.DOWNLOAD_REQUEST_OPENED = 'Link opened';
 
 i18n
     .use(initReactI18next)

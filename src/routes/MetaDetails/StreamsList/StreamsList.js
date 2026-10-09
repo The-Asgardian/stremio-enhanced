@@ -246,11 +246,10 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                                         : null
                                 }
                                 {recentDownloads.length > 0 ? (
-                                    <section className={styles['recent-downloads']} aria-label={'Recent downloads'}>
+                                    <section className={styles['recent-downloads']} aria-label={t('DOWNLOADS')}>
                                         <div className={styles['recent-downloads-heading']}>
                                             <div>
-                                                <h3>Recent downloads</h3>
-                                                <p>Opened by your browser. Progress and offline availability are managed by your device.</p>
+                                                <h3>{t('DOWNLOADS')}</h3>
                                             </div>
                                             <Button className={styles['clear-downloads']} title={t('CLEAR_HISTORY')} onClick={() => setRecentDownloads([])}>
                                                 {t('CLEAR_HISTORY')}
@@ -263,9 +262,7 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                                                         <strong>{entry.fileName}</strong>
                                                         <span>{entry.title} · {new Date(entry.requestedAt).toLocaleTimeString()}</span>
                                                     </div>
-                                                    <a href={entry.href} target={'_blank'} rel={'noopener noreferrer'} download={entry.fileName}>
-                                                        {t('CTX_DOWNLOAD_VIDEO')}
-                                                    </a>
+                                                    <span>{t('DOWNLOAD_REQUEST_OPENED')}</span>
                                                 </li>
                                             ))}
                                         </ul>
