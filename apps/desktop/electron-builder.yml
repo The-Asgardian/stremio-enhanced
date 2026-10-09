@@ -1,0 +1,23 @@
+appId: org.stremio.enhanced.desktop
+productName: Stremio Enhanced
+asar: true
+directories:
+  app: apps/desktop
+  output: node_modules/.cache/stremio-desktop
+files:
+  - '**/*.cjs'
+  - stremio.ico
+  - '!node_modules/**'
+extraResources:
+  - from: build
+    to: build
+win:
+  icon: apps/desktop/stremio.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: Stremio-Enhanced-Setup-${version}.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true

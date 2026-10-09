@@ -6,6 +6,8 @@ const isDismissalActive = (value, now = Date.now()) => {
     return Number.isFinite(dismissedAt) && dismissedAt > 0 && now - dismissedAt < DISMISSAL_DAYS * 24 * 60 * 60 * 1000;
 };
 
+const isDesktopWrapper = (userAgent = '') => /\bElectron\//i.test(userAgent);
+
 const getInstallHelpKey = (userAgent = '') => /iPad|iPhone|iPod/i.test(userAgent) ? 'PWA_INSTALL_IOS_HELP' : 'PWA_INSTALL_BROWSER_HELP';
 
 const readDismissal = (storage, now = Date.now()) => {
@@ -29,4 +31,4 @@ const writeDismissal = (storage, now = Date.now()) => {
     }
 };
 
-module.exports = { DISMISSAL_KEY, isDismissalActive, getInstallHelpKey, readDismissal, writeDismissal };
+module.exports = { DISMISSAL_KEY, isDismissalActive, isDesktopWrapper, getInstallHelpKey, readDismissal, writeDismissal };

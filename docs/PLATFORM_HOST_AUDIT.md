@@ -21,3 +21,8 @@ The design's provisional Windows/Linux desktop-first scope cannot be met by `str
 Mobile and TV remain separate packaging decisions. The web/PWA can be used as a responsive browser client, but that does not establish native Android/iOS or Android TV/Google TV support. Native TV work needs a target platform, player and remote-navigation validation plan.
 
 No shell repository or binary is vendored by this audit.
+# Desktop implementation update (2026-10-09)
+
+The repository now has a local Windows x64 Electron proof of concept under `apps/desktop`. It reuses the responsive web app and serves production assets over loopback HTTP for worker/WASM compatibility. See [the desktop ADR](../apps/desktop/ADR.md) for the host rationale, security settings, commands, and known limits. This is a Windows-first desktop target, not a cross-platform desktop completion claim. Native mobile/TV packages and a native player remain future work. Stremio Service remains a separately installed official companion and is not bundled.
+
+The upstream Qt shell reuse question remains open pending a GPL-3.0 versus this repository's GPL-2.0 compatibility review. The license/distribution status of `shell-ng` remains unresolved.

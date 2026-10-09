@@ -1,0 +1,10 @@
+{
+    "name": "stremio-enhanced-desktop",
+    "productName": "Stremio Enhanced",
+    "version": "5.0.0-beta.41",
+    "description": "Windows desktop host for the Stremio Enhanced web application",
+    "author": "Stremio Enhanced contributors",
+    "private": true,
+    "main": "main.cjs",
+    "license": "GPL-2.0"
+}

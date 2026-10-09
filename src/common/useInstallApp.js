@@ -1,5 +1,7 @@
 const React = require('react');
-const { readDismissal, writeDismissal, getInstallHelpKey } = require('./installApp');
+const { readDismissal, writeDismissal, getInstallHelpKey, isDesktopWrapper } = require('./installApp');
+
+const isDesktopApp = () => typeof window !== 'undefined' && isDesktopWrapper(window.navigator.userAgent);
 
 const isStandalone = () => {
     if (typeof window === 'undefined') return false;
@@ -16,15 +18,17 @@ const getLocalStorage = () => {
 
 const useInstallApp = () => {
     const [deferredPrompt, setDeferredPrompt] = React.useState(null);
-    const [hidden, setHidden] = React.useState(() => isStandalone() || readDismissal(getLocalStorage()));
+    const [hidden, setHidden] = React.useState(() => isDesktopApp() || isStandalone() || readDismissal(getLocalStorage()));
 
     React.useEffect(() => {
+        if (isDesktopApp()) return undefined;
+
         const onBeforeInstallPrompt = (event) => {
             event.preventDefault();
             setDeferredPrompt(event);
         };
         const onAppInstalled = () => setHidden(true);
-        const onDisplayModeChange = () => setHidden(isStandalone() || readDismissal(getLocalStorage()));
+        const onDisplayModeChange = () => setHidden(isDesktopApp() || isStandalone() || readDismissal(getLocalStorage()));
 
         window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
         window.addEventListener('appinstalled', onAppInstalled);

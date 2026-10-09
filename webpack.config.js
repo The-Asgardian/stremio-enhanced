@@ -218,8 +218,8 @@ module.exports = (env, argv) => ({
         new webpack.ProgressPlugin(),
         new webpack.EnvironmentPlugin({
             SENTRY_DSN: null,
-            ...env,
             SERVICE_WORKER_DISABLED: false,
+            ...env,
             DEBUG: argv.mode !== 'production',
             VERSION: packageJson.version,
             COMMIT_HASH
@@ -228,6 +228,8 @@ module.exports = (env, argv) => ({
             Buffer: ['buffer', 'Buffer']
         }),
         argv.mode === 'production' &&
+            env.SERVICE_WORKER_DISABLED !== true &&
+            env.SERVICE_WORKER_DISABLED !== 'true' &&
             new WorkboxPlugin.GenerateSW({
                 maximumFileSizeToCacheInBytes: 20000000,
                 clientsClaim: true,

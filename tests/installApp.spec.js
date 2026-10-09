@@ -1,6 +1,7 @@
 const {
     DISMISSAL_KEY,
     isDismissalActive,
+    isDesktopWrapper,
     getInstallHelpKey,
     readDismissal,
     writeDismissal
@@ -19,6 +20,11 @@ describe('install app helpers', () => {
     test('uses iOS share-sheet help where available', () => {
         expect(getInstallHelpKey('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)')).toBe('PWA_INSTALL_IOS_HELP');
         expect(getInstallHelpKey('Mozilla/5.0 (Windows NT 10.0; Win64; x64)')).toBe('PWA_INSTALL_BROWSER_HELP');
+    });
+
+    test('recognizes the packaged desktop wrapper', () => {
+        expect(isDesktopWrapper('Mozilla/5.0 Chrome/140.0.0.0 Electron/40.0.0')).toBe(true);
+        expect(isDesktopWrapper('Mozilla/5.0 Chrome/140.0.0.0 Safari/537.36')).toBe(false);
     });
 
     test('reads, expires, and safely writes local dismissal state', () => {
