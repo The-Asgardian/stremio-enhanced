@@ -5,7 +5,7 @@ const classnames = require('classnames');
 const useTranslate = require('stremio/common/useTranslate');
 const { default: useVisibleCatalogs } = require('stremio/common/useVisibleCatalogs');
 const { useStreamingServer, useNotifications, withCoreSuspender, useProfile } = require('stremio/common');
-const { ContinueWatchingItem, EventModal, LiveTvContinueWatchingItem, MainNavBars, MetaItem, MetaRow } = require('stremio/components');
+const { Button, ContinueWatchingItem, EventModal, LiveTvContinueWatchingItem, MainNavBars, MetaItem, MetaRow } = require('stremio/components');
 const useBoard = require('./useBoard');
 const useContinueWatchingPreview = require('./useContinueWatchingPreview');
 const { default: useLiveTvContinueWatching } = require('./useLiveTvContinueWatching');
@@ -13,6 +13,7 @@ const styles = require('./styles');
 const { default: StreamingServerWarning } = require('./StreamingServerWarning');
 const FeaturedHero = require('./FeaturedHero');
 const getFeaturedMetaItem = require('./featuredMetaItem');
+const getCategoryShortcuts = require('./categoryShortcuts');
 
 const THRESHOLD = 5;
 
@@ -43,12 +44,22 @@ const Board = () => {
         preloadRows: THRESHOLD,
     });
     const featuredItem = React.useMemo(() => getFeaturedMetaItem(catalogRows), [catalogRows]);
+    const categoryShortcuts = React.useMemo(() => getCategoryShortcuts(catalogRows), [catalogRows]);
     return (
         <div className={styles['board-container']}>
             <EventModal />
             <MainNavBars className={styles['board-content-container']} route={'board'}>
                 <div ref={scrollContainerRef} className={styles['board-content']} onScroll={onScroll}>
                     <FeaturedHero item={featuredItem} />
+                    {categoryShortcuts.length > 0 ? (
+                        <div className={classnames(styles['category-shortcuts'], 'animation-fade-in')}>
+                            {categoryShortcuts.map(({ type, href }) => (
+                                <Button key={type} className={styles['category-shortcut']} href={href}>
+                                    {t.stringWithPrefix(type, 'TYPE_')}
+                                </Button>
+                            ))}
+                        </div>
+                    ) : null}
                     {
                         continueWatchingPreview.items.length > 0 ?
                             <MetaRow
