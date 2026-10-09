@@ -192,8 +192,14 @@ module.exports = (env, argv) => ({
         host: '0.0.0.0',
         static: false,
         hot: false,
-        server: 'https',
-        liveReload: false
+        server: process.env.STREMIO_DEV_HTTPS === 'true' ? 'https' : 'http',
+        liveReload: false,
+        proxy: [{
+            context: ['/stremio-service'],
+            target: 'http://127.0.0.1:11470',
+            changeOrigin: true,
+            pathRewrite: { '^/stremio-service': '' }
+        }]
     },
     optimization: {
         minimize: true,
@@ -219,6 +225,9 @@ module.exports = (env, argv) => ({
         new webpack.EnvironmentPlugin({
             SENTRY_DSN: null,
             SERVICE_WORKER_DISABLED: false,
+            STREAMING_SERVER_URL: argv.mode === 'development'
+                ? 'http://localhost:8080/stremio-service/'
+                : 'http://127.0.0.1:11470/',
             ...env,
             DEBUG: argv.mode !== 'production',
             VERSION: packageJson.version,

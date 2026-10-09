@@ -9,6 +9,9 @@ const { default: StreamingServerUrlModal } = require('./StreamingServerUrlModal'
 const DEFAULT_STREAMING_SERVER_URLS = new Set([
     new URL(CONSTANTS.DEFAULT_STREAMING_SERVER_URL).href,
     new URL('http://localhost:11470').href,
+    new URL('http://localhost:11470/').href,
+    new URL('http://127.0.0.1:11470').href,
+    new URL('http://127.0.0.1:11470/').href,
 ]);
 const LOOPBACK_HOSTNAMES = new Set(['127.0.0.1', 'localhost']);
 
@@ -67,6 +70,20 @@ const SearchParamsHandler = () => {
             });
         }
     }, [core, profile.settings, toast]);
+
+    React.useEffect(() => {
+        if (process.env.NODE_ENV !== 'development') return;
+
+        const selected = normalize(profile.settings.streamingServerUrl);
+        const proxiedDefault = normalize(CONSTANTS.DEFAULT_STREAMING_SERVER_URL);
+        if (
+            selected !== null &&
+            selected !== proxiedDefault &&
+            DEFAULT_STREAMING_SERVER_URLS.has(selected)
+        ) {
+            apply(CONSTANTS.DEFAULT_STREAMING_SERVER_URL, { save: false, notify: false });
+        }
+    }, [apply, profile.settings.streamingServerUrl]);
 
     const onConfirm = React.useCallback(() => {
         apply(requested, { save: true, notify: false });
