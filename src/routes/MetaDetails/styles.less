@@ -100,6 +100,34 @@
     }
 }
 
+@media only screen and (max-width: @xxsmall) {
+    .metadetails-container {
+        .metadetails-content {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding-top: calc(var(--top-overlay-size) + var(--safe-area-inset-top));
+
+            .spacing {
+                display: none;
+            }
+
+            .meta-preview {
+                flex: none;
+                width: 100%;
+                padding: 0 1.75rem 2rem;
+            }
+
+            .videos-list, .streams-list {
+                flex: none;
+                width: 100%;
+                min-height: 30rem;
+                border-radius: var(--border-radius) var(--border-radius) 0 0;
+            }
+        }
+    }
+}
+
 @media @phone-landscape {
     .metadetails-container {
         .metadetails-content {
