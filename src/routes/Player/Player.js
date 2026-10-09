@@ -28,6 +28,7 @@ const { default: AudioMenu } = require('./AudioMenu');
 const SpeedMenu = require('./SpeedMenu');
 const { default: SideDrawerButton } = require('./SideDrawerButton');
 const { default: SideDrawer } = require('./SideDrawer');
+const { logSafePlaybackError } = require('./safePlaybackDiagnostics');
 const usePlayer = require('./usePlayer');
 const { default: usePlayOnDevice } = require('./usePlayOnDevice');
 const { default: useCastDevice } = require('./useCastDevice');
@@ -265,7 +266,7 @@ const Player = () => {
     }, [isEpg, player.nextVideo, profile.settings.bingeWatching, handleNextVideoNavigation, ended, nextVideo, goBack]);
 
     const onError = React.useCallback((error) => {
-        console.error('Player', error);
+        logSafePlaybackError('Player', error);
         if (error.critical) {
             setError(error);
         } else {

@@ -3,6 +3,7 @@
 const React = require('react');
 const Video = require('@stremio/stremio-video');
 const EventEmitter = require('eventemitter3');
+const { logSafePlaybackError } = require('./safePlaybackDiagnostics');
 
 const events = new EventEmitter();
 
@@ -54,7 +55,7 @@ const useVideo = () => {
                     containerElement: containerRef.current,
                 });
             } catch (error) {
-                console.error('Video:', error);
+                logSafePlaybackError('Video', error);
             }
         }
     }, []);
@@ -232,7 +233,7 @@ const useVideo = () => {
                 try {
                     video.current.destroy();
                 } catch (err) {
-                    console.error('Error destroying video:', err);
+                    logSafePlaybackError('VideoDestroy', err);
                 }
             }
         };

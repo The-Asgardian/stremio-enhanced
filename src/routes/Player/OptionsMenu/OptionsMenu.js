@@ -6,6 +6,7 @@ const classnames = require('classnames');
 const { useTranslation } = require('react-i18next');
 const { usePlatform, useToast } = require('stremio/common');
 const { default: usePlayOnDevice } = require('../usePlayOnDevice');
+const { logSafePlaybackError } = require('../safePlaybackDiagnostics');
 const Option = require('./Option');
 const styles = require('./styles');
 
@@ -46,11 +47,11 @@ const OptionsMenu = React.memo(React.forwardRef(({ className, stream, playbackDe
                     });
                 })
                 .catch((e) => {
-                    console.error(e);
+                    logSafePlaybackError('CopyStream', e);
                     toast.show({
                         type: 'error',
                         title: t('ERROR'),
-                        message: `${t('PLAYER_COPY_STREAM_ERROR')}: ${streamingUrl || downloadUrl}`,
+                        message: t('PLAYER_COPY_STREAM_ERROR'),
                         timeout: 3000
                     });
                 });
@@ -68,11 +69,11 @@ const OptionsMenu = React.memo(React.forwardRef(({ className, stream, playbackDe
                     });
                 })
                 .catch((e) => {
-                    console.error(e);
+                    logSafePlaybackError('CopyMagnet', e);
                     toast.show({
                         type: 'error',
-                        title: t('Error'),
-                        message: `${t('PLAYER_COPY_MAGNET_LINK_ERROR')}: ${magnetUrl}`,
+                        title: t('ERROR'),
+                        message: t('PLAYER_COPY_MAGNET_LINK_ERROR'),
                         timeout: 3000
                     });
                 });
